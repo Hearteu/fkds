@@ -207,32 +207,20 @@ class _GalleryScreenState extends State<GalleryScreen> {
                      delegate: SliverChildBuilderDelegate((context, index) {
                        return AdventureCard(
                          adventure: adventures[index],
-                         onTap: () {
-                           Navigator.push(
+                         onTap: () async {
+                           final result = await Navigator.push(
                              context,
                              MaterialPageRoute(
                                builder: (context) => AdventureDetailScreen(
                                  adventure: adventures[index],
+                                 isEditable: !_useSampleData,
                                ),
                              ),
                            );
+                           if (result == true) {
+                             _loadAdventures();
+                           }
                          },
-                         onEdit: !_useSampleData
-                             ? () async {
-                                 final result = await Navigator.push(
-                                   context,
-                                   MaterialPageRoute(
-                                     builder: (context) =>
-                                         EditAdventureScreen(
-                                       adventure: adventures[index],
-                                     ),
-                                   ),
-                                 );
-                                 if (result == true) {
-                                   _loadAdventures();
-                                 }
-                               }
-                             : null,
                        );
                      }, childCount: adventures.length),
                   ),
@@ -269,13 +257,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
 class AdventureCard extends StatefulWidget {
   final Adventure adventure;
   final VoidCallback onTap;
-  final VoidCallback? onEdit;
 
   const AdventureCard({
     super.key,
     required this.adventure,
     required this.onTap,
-    this.onEdit,
   });
 
   @override
@@ -316,49 +302,31 @@ class _AdventureCardState extends State<AdventureCard> {
                 // Image
                 Expanded(
                   flex: 3,
-                  child: Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(20),
-                          ),
-                          image: DecorationImage(
-                            image: NetworkImage(widget.adventure.coverImage),
-                            fit: BoxFit.cover,
-                          ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      image: DecorationImage(
+                        image: NetworkImage(widget.adventure.coverImage),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(20),
                         ),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(20),
-                            ),
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.4),
-                              ],
-                            ),
-                          ),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.4),
+                          ],
                         ),
                       ),
-                      if (widget.onEdit != null)
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: IconButton(
-                            icon: const Icon(Icons.edit_outlined),
-                            style: IconButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.9),
-                              foregroundColor: const Color(0xFF667EEA),
-                            ),
-                            onPressed: widget.onEdit,
-                            tooltip: 'Edit Adventure',
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
                 // Content
