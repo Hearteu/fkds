@@ -29,33 +29,11 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
   bool _isUploading = false;
   bool _isSelectionMode = false;
   final Set<String> _selectedPhotoIds = {};
-  final ScrollController _scrollController = ScrollController();
-  bool _showTitle = false;
 
   @override
   void initState() {
     super.initState();
     mediaItems = List.from(widget.adventure.mediaItems);
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    // Show title in app bar when scrolled down past header
-    if (_scrollController.hasClients) {
-      final showTitle = _scrollController.offset > 200;
-      if (showTitle != _showTitle) {
-        setState(() {
-          _showTitle = showTitle;
-        });
-      }
-    }
   }
 
   void _toggleSelectionMode() {
@@ -262,7 +240,6 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: CustomScrollView(
-        controller: _scrollController,
         slivers: [
           SliverAppBar(
             expandedHeight: 300,
