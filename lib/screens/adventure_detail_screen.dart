@@ -29,11 +29,114 @@ class AdventureDetailScreen extends StatefulWidget {
 class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
   late List<MediaItem> mediaItems;
   bool _isUploading = false;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedPhotoIds = {};
+  final ScrollController _scrollController = ScrollController();
+  bool _showTitle = false;
 
   @override
   void initState() {
     super.initState();
     mediaItems = List.from(widget.adventure.mediaItems);
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Show title in app bar when scrolled down past header
+    if (_scrollController.hasClients) {
+      final showTitle = _scrollController.offset > 200;
+      if (showTitle != _showTitle) {
+        setState(() {
+          _showTitle = showTitle;
+        });
+      }
+    }
+  }
+
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      _selectedPhotoIds.clear();
+    });
+  }
+
+  void _togglePhotoSelection(String photoId) {
+    setState(() {
+      if (_selectedPhotoIds.contains(photoId)) {
+        _selectedPhotoIds.remove(photoId);
+      } else {
+        _selectedPhotoIds.add(photoId);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedPhotos() async {
+    if (_selectedPhotoIds.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete ${_selectedPhotoIds.length} Photos?', 
+          style: GoogleFonts.playfairDisplay()),
+        content: Text(
+          'This will permanently delete ${_selectedPhotoIds.length} selected photos from the adventure.',
+          style: GoogleFonts.lato(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.lato()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text('Delete All', style: GoogleFonts.lato()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final photosToDelete = mediaItems
+          .where((item) => _selectedPhotoIds.contains(item.id))
+          .toList();
+
+      for (var item in photosToDelete) {
+        await SupabaseService.deleteMediaItem(item.id);
+        setState(() {
+          mediaItems.remove(item);
+        });
+      }
+
+      setState(() {
+        _selectedPhotoIds.clear();
+        _isSelectionMode = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${photosToDelete.length} photos deleted'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _addPhotos() async {
@@ -162,6 +265,7 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           SliverAppBar(
             expandedHeight: 300,
@@ -178,6 +282,16 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
               ),
               onPressed: () => Navigator.pop(context, mediaItems.length != widget.adventure.mediaItems.length),
             ),
+            title: _showTitle
+                ? Text(
+                    widget.adventure.title,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF2C3E50),
+                    ),
+                  )
+                : null,
             actions: widget.isEditable
                 ? [
                     IconButton(
@@ -338,23 +452,71 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                         ),
                       ),
                       const Spacer(),
-                      if (widget.isEditable)
-                        ElevatedButton.icon(
-                          onPressed: _isUploading ? null : _addPhotos,
-                          icon: const Icon(Icons.add_photo_alternate, size: 18),
-                          label: Text(
-                            'Add Photos',
-                            style: GoogleFonts.lato(fontWeight: FontWeight.w600),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF667EEA),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
+                      if (widget.isEditable) ...[
+                        if (_isSelectionMode) ...[
+                          OutlinedButton.icon(
+                            onPressed: _selectedPhotoIds.isEmpty ? null : _deleteSelectedPhotos,
+                            icon: const Icon(Icons.delete_outline, size: 18),
+                            label: Text(
+                              'Delete (${_selectedPhotoIds.length})',
+                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: _toggleSelectionMode,
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          OutlinedButton.icon(
+                            onPressed: mediaItems.isEmpty ? null : _toggleSelectionMode,
+                            icon: const Icon(Icons.check_circle_outline, size: 18),
+                            label: Text(
+                              'Select',
+                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: _isUploading ? null : _addPhotos,
+                            icon: const Icon(Icons.add_photo_alternate, size: 18),
+                            label: Text(
+                              'Add Photos',
+                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF667EEA),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ],
                   ),
                   if (_isUploading)
@@ -393,22 +555,31 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                 childAspectRatio: 1,
               ),
               delegate: SliverChildBuilderDelegate((context, index) {
+                final item = mediaItems[index];
+                final isSelected = _selectedPhotoIds.contains(item.id);
+                
                 return MediaThumbnail(
-                  mediaItem: mediaItems[index],
+                  mediaItem: item,
                   isEditable: widget.isEditable,
+                  isSelectionMode: _isSelectionMode,
+                  isSelected: isSelected,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MediaViewerScreen(
-                          mediaItems: mediaItems,
-                          initialIndex: index,
+                    if (_isSelectionMode) {
+                      _togglePhotoSelection(item.id);
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MediaViewerScreen(
+                            mediaItems: mediaItems,
+                            initialIndex: index,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    }
                   },
-                  onDelete: widget.isEditable
-                      ? () => _deletePhoto(mediaItems[index])
+                  onDelete: widget.isEditable && !_isSelectionMode
+                      ? () => _deletePhoto(item)
                       : null,
                 );
               }, childCount: mediaItems.length),
@@ -426,6 +597,8 @@ class MediaThumbnail extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback? onDelete;
   final bool isEditable;
+  final bool isSelectionMode;
+  final bool isSelected;
 
   const MediaThumbnail({
     super.key,
@@ -433,6 +606,8 @@ class MediaThumbnail extends StatefulWidget {
     required this.onTap,
     this.onDelete,
     this.isEditable = false,
+    this.isSelectionMode = false,
+    this.isSelected = false,
   });
 
   @override
@@ -441,6 +616,7 @@ class MediaThumbnail extends StatefulWidget {
 
 class _MediaThumbnailState extends State<MediaThumbnail> {
   bool _isHovered = false;
+  bool _showDeleteButton = false;
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +624,24 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: GestureDetector(
-        onTap: widget.onTap,
+        onTap: () {
+          if (widget.isSelectionMode) {
+            widget.onTap();
+          } else if (!_showDeleteButton) {
+            widget.onTap();
+          } else {
+            setState(() {
+              _showDeleteButton = false;
+            });
+          }
+        },
+        onLongPress: widget.isEditable && !widget.isSelectionMode
+            ? () {
+                setState(() {
+                  _showDeleteButton = !_showDeleteButton;
+                });
+              }
+            : null,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           transform: Matrix4.identity()..scale(_isHovered ? 0.95 : 1.0),
@@ -476,26 +669,79 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                       ),
                     ),
                   ),
-                if (_isHovered)
+                // Selection mode overlay
+                if (widget.isSelectionMode)
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.2),
+                      color: widget.isSelected
+                          ? Colors.blue.withOpacity(0.4)
+                          : Colors.black.withOpacity(0.2),
+                      border: widget.isSelected
+                          ? Border.all(color: Colors.blue, width: 3)
+                          : null,
                     ),
                   ),
-                if (widget.isEditable && widget.onDelete != null)
+                // Selection checkbox
+                if (widget.isSelectionMode)
                   Positioned(
-                    top: 4,
-                    right: 4,
-                    child: IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.red.withOpacity(0.9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.all(4),
-                        minimumSize: const Size(28, 28),
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: widget.isSelected
+                            ? Colors.blue
+                            : Colors.white.withOpacity(0.9),
                       ),
-                      onPressed: widget.onDelete,
-                      tooltip: 'Delete Photo',
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        widget.isSelected
+                            ? Icons.check_circle
+                            : Icons.circle_outlined,
+                        color: widget.isSelected ? Colors.white : Colors.grey,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                // Delete button (appears on click when not in selection mode)
+                if (_showDeleteButton &&
+                    widget.isEditable &&
+                    !widget.isSelectionMode &&
+                    widget.onDelete != null)
+                  Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            iconSize: 48,
+                            color: Colors.white,
+                            onPressed: () {
+                              setState(() {
+                                _showDeleteButton = false;
+                              });
+                              widget.onDelete!();
+                            },
+                          ),
+                          Text(
+                            'Delete Photo',
+                            style: GoogleFonts.lato(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tap again to cancel',
+                            style: GoogleFonts.lato(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
