@@ -93,7 +93,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           Shadow(
                             offset: const Offset(0, 2),
                             blurRadius: 4,
-                            color: Colors.black.withValues(alpha: 0.5),
+                            color: Colors.black.withOpacity( 0.5),
                           ),
                         ],
                       ),
@@ -130,8 +130,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withValues(alpha: 0.3),
-                                Colors.black.withValues(alpha: 0.6),
+                                Colors.black.withOpacity( 0.3),
+                                Colors.black.withOpacity( 0.6),
                               ],
                             ),
                           ),
@@ -288,8 +288,8 @@ class _AdventureCardState extends State<AdventureCard> {
               boxShadow: [
                 BoxShadow(
                   color: _isHovered
-                      ? Colors.blue.withValues(alpha: 0.3)
-                      : Colors.black.withValues(alpha: 0.1),
+                      ? Colors.blue.withOpacity( 0.3)
+                      : Colors.black.withOpacity( 0.1),
                   blurRadius: _isHovered ? 20 : 10,
                   offset: const Offset(0, 5),
                 ),
@@ -321,7 +321,7 @@ class _AdventureCardState extends State<AdventureCard> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.4),
+                            Colors.black.withOpacity( 0.4),
                           ],
                         ),
                       ),

@@ -77,7 +77,7 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.7),
+                    Colors.black.withOpacity( 0.7),
                     Colors.transparent
                   ],
                 ),
@@ -115,7 +115,7 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.8),
+                    Colors.black.withOpacity( 0.8),
                     Colors.transparent
                   ],
                 ),
@@ -187,7 +187,7 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: Colors.black.withOpacity( 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -214,7 +214,7 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: Colors.black.withOpacity( 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(

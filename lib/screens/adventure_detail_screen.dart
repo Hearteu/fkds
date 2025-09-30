@@ -249,7 +249,7 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: Colors.white.withOpacity( 0.9),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50)),
@@ -263,7 +263,7 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withOpacity( 0.9),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -307,7 +307,7 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.7),
+                          Colors.black.withOpacity( 0.7),
                         ],
                       ),
                     ),
@@ -681,7 +681,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                 ),
                 if (widget.mediaItem.type == MediaType.video)
                   Container(
-                    color: Colors.black.withValues(alpha: 0.3),
+                    color: Colors.black.withOpacity( 0.3),
                     child: const Center(
                       child: Icon(
                         Icons.play_circle_outline,
@@ -695,8 +695,8 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                   Container(
                     decoration: BoxDecoration(
                       color: widget.isSelected
-                          ? Colors.blue.withValues(alpha: 0.4)
-                          : Colors.black.withValues(alpha: 0.2),
+                          ? Colors.blue.withOpacity( 0.4)
+                          : Colors.black.withOpacity( 0.2),
                       border: widget.isSelected
                           ? Border.all(color: Colors.blue, width: 3)
                           : null,
@@ -712,7 +712,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                         shape: BoxShape.circle,
                         color: widget.isSelected
                             ? Colors.blue
-                            : Colors.white.withValues(alpha: 0.9),
+                            : Colors.white.withOpacity( 0.9),
                       ),
                       padding: const EdgeInsets.all(4),
                       child: Icon(
@@ -730,7 +730,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                     !widget.isSelectionMode &&
                     widget.onDelete != null)
                   Container(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withOpacity( 0.5),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
