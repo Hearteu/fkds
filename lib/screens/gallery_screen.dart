@@ -8,7 +8,6 @@ import '../models/app_settings.dart';
 import '../services/supabase_service.dart';
 import 'add_adventure_screen.dart';
 import 'adventure_detail_screen.dart';
-import 'edit_adventure_screen.dart';
 import 'settings_screen.dart';
 
 class GalleryScreen extends StatefulWidget {
@@ -94,7 +93,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                           Shadow(
                             offset: const Offset(0, 2),
                             blurRadius: 4,
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                           ),
                         ],
                       ),
@@ -131,8 +130,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.3),
-                                Colors.black.withOpacity(0.6),
+                                Colors.black.withValues(alpha: 0.3),
+                                Colors.black.withValues(alpha: 0.6),
                               ],
                             ),
                           ),
@@ -204,25 +203,25 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       crossAxisSpacing: 20,
                       childAspectRatio: 0.85,
                     ),
-                     delegate: SliverChildBuilderDelegate((context, index) {
-                       return AdventureCard(
-                         adventure: adventures[index],
-                         onTap: () async {
-                           final result = await Navigator.push(
-                             context,
-                             MaterialPageRoute(
-                               builder: (context) => AdventureDetailScreen(
-                                 adventure: adventures[index],
-                                 isEditable: !_useSampleData,
-                               ),
-                             ),
-                           );
-                           if (result == true) {
-                             _loadAdventures();
-                           }
-                         },
-                       );
-                     }, childCount: adventures.length),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return AdventureCard(
+                        adventure: adventures[index],
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AdventureDetailScreen(
+                                adventure: adventures[index],
+                                isEditable: !_useSampleData,
+                              ),
+                            ),
+                          );
+                          if (result == true) {
+                            _loadAdventures();
+                          }
+                        },
+                      );
+                    }, childCount: adventures.length),
                   ),
                 ),
                 const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
@@ -289,8 +288,8 @@ class _AdventureCardState extends State<AdventureCard> {
               boxShadow: [
                 BoxShadow(
                   color: _isHovered
-                      ? Colors.blue.withOpacity(0.3)
-                      : Colors.black.withOpacity(0.1),
+                      ? Colors.blue.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.1),
                   blurRadius: _isHovered ? 20 : 10,
                   offset: const Offset(0, 5),
                 ),
@@ -322,7 +321,7 @@ class _AdventureCardState extends State<AdventureCard> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.4),
+                            Colors.black.withValues(alpha: 0.4),
                           ],
                         ),
                       ),

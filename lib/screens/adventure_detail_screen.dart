@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -83,8 +81,8 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete ${_selectedPhotoIds.length} Photos?', 
-          style: GoogleFonts.playfairDisplay()),
+        title: Text('Delete ${_selectedPhotoIds.length} Photos?',
+            style: GoogleFonts.playfairDisplay()),
         content: Text(
           'This will permanently delete ${_selectedPhotoIds.length} selected photos from the adventure.',
           style: GoogleFonts.lato(),
@@ -164,9 +162,8 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
         final fileUrl = await SupabaseService.uploadFile(
           fileBytes: file.bytes!,
           fileName: file.name,
-          contentType: isVideo
-              ? 'video/${file.extension}'
-              : 'image/${file.extension}',
+          contentType:
+              isVideo ? 'video/${file.extension}' : 'image/${file.extension}',
         );
 
         if (fileUrl == null) continue;
@@ -275,30 +272,21 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50)),
               ),
-              onPressed: () => Navigator.pop(context, mediaItems.length != widget.adventure.mediaItems.length),
+              onPressed: () => Navigator.pop(context,
+                  mediaItems.length != widget.adventure.mediaItems.length),
             ),
-            title: _showTitle
-                ? Text(
-                    widget.adventure.title,
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2C3E50),
-                    ),
-                  )
-                : null,
             actions: widget.isEditable
                 ? [
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -342,105 +330,29 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
                       ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.adventure.title,
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (widget.adventure.location != null)
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                color: Colors.white70,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                widget.adventure.location!,
-                                style: GoogleFonts.lato(
-                                  fontSize: 14,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
                     ),
                   ),
                 ],
               ),
             ),
           ),
+          // Pinned header with title, location, date, and description
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _AdventureHeaderDelegate(
+              adventure: widget.adventure,
+              mediaCount: mediaItems.length,
+            ),
+          ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 18,
-                        color: Colors.grey[600],
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('MMMM dd, yyyy').format(widget.adventure.date),
-                        style: GoogleFonts.lato(
-                          fontSize: 16,
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${mediaItems.length} photos',
-                          style: GoogleFonts.lato(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue.shade700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    widget.adventure.description,
-                    style: GoogleFonts.lato(
-                      fontSize: 16,
-                      color: Colors.grey[700],
-                      height: 1.6,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
                   Row(
                     children: [
                       Text(
@@ -455,11 +367,14 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                       if (widget.isEditable) ...[
                         if (_isSelectionMode) ...[
                           OutlinedButton.icon(
-                            onPressed: _selectedPhotoIds.isEmpty ? null : _deleteSelectedPhotos,
+                            onPressed: _selectedPhotoIds.isEmpty
+                                ? null
+                                : _deleteSelectedPhotos,
                             icon: const Icon(Icons.delete_outline, size: 18),
                             label: Text(
                               'Delete (${_selectedPhotoIds.length})',
-                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                              style:
+                                  GoogleFonts.lato(fontWeight: FontWeight.w600),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.red,
@@ -472,24 +387,29 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                           const SizedBox(width: 8),
                           OutlinedButton(
                             onPressed: _toggleSelectionMode,
-                            child: Text(
-                              'Cancel',
-                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
-                            ),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 10,
                               ),
                             ),
+                            child: Text(
+                              'Cancel',
+                              style:
+                                  GoogleFonts.lato(fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ] else ...[
                           OutlinedButton.icon(
-                            onPressed: mediaItems.isEmpty ? null : _toggleSelectionMode,
-                            icon: const Icon(Icons.check_circle_outline, size: 18),
+                            onPressed: mediaItems.isEmpty
+                                ? null
+                                : _toggleSelectionMode,
+                            icon: const Icon(Icons.check_circle_outline,
+                                size: 18),
                             label: Text(
                               'Select',
-                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                              style:
+                                  GoogleFonts.lato(fontWeight: FontWeight.w600),
                             ),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
@@ -501,10 +421,12 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                           const SizedBox(width: 8),
                           ElevatedButton.icon(
                             onPressed: _isUploading ? null : _addPhotos,
-                            icon: const Icon(Icons.add_photo_alternate, size: 18),
+                            icon:
+                                const Icon(Icons.add_photo_alternate, size: 18),
                             label: Text(
                               'Add Photos',
-                              style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                              style:
+                                  GoogleFonts.lato(fontWeight: FontWeight.w600),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF667EEA),
@@ -557,7 +479,7 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
               delegate: SliverChildBuilderDelegate((context, index) {
                 final item = mediaItems[index];
                 final isSelected = _selectedPhotoIds.contains(item.id);
-                
+
                 return MediaThumbnail(
                   mediaItem: item,
                   isEditable: widget.isEditable,
@@ -589,6 +511,128 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
         ],
       ),
     );
+  }
+}
+
+// Custom delegate for the pinned header
+class _AdventureHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Adventure adventure;
+  final int mediaCount;
+
+  _AdventureHeaderDelegate({
+    required this.adventure,
+    required this.mediaCount,
+  });
+
+  @override
+  double get minExtent => 200; // Minimum height when collapsed
+  @override
+  double get maxExtent => 200; // Maximum height when expanded
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title
+            Text(
+              adventure.title,
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF2C3E50),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            // Location and Date row
+            Row(
+              children: [
+                if (adventure.location != null) ...[
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    adventure.location!,
+                    style: GoogleFonts.lato(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                  color: Colors.grey[600],
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  DateFormat('MMM dd, yyyy').format(adventure.date),
+                  style: GoogleFonts.lato(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$mediaCount photos',
+                    style: GoogleFonts.lato(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Description
+            Expanded(
+              child: Text(
+                adventure.description,
+                style: GoogleFonts.lato(
+                  fontSize: 15,
+                  color: Colors.grey[700],
+                  height: 1.5,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Bottom border
+            Container(
+              height: 1,
+              color: Colors.grey[200],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(_AdventureHeaderDelegate oldDelegate) {
+    return adventure != oldDelegate.adventure ||
+        mediaCount != oldDelegate.mediaCount;
   }
 }
 
@@ -660,7 +704,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                 ),
                 if (widget.mediaItem.type == MediaType.video)
                   Container(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     child: const Center(
                       child: Icon(
                         Icons.play_circle_outline,
@@ -674,8 +718,8 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                   Container(
                     decoration: BoxDecoration(
                       color: widget.isSelected
-                          ? Colors.blue.withOpacity(0.4)
-                          : Colors.black.withOpacity(0.2),
+                          ? Colors.blue.withValues(alpha: 0.4)
+                          : Colors.black.withValues(alpha: 0.2),
                       border: widget.isSelected
                           ? Border.all(color: Colors.blue, width: 3)
                           : null,
@@ -691,7 +735,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                         shape: BoxShape.circle,
                         color: widget.isSelected
                             ? Colors.blue
-                            : Colors.white.withOpacity(0.9),
+                            : Colors.white.withValues(alpha: 0.9),
                       ),
                       padding: const EdgeInsets.all(4),
                       child: Icon(
@@ -709,7 +753,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                     !widget.isSelectionMode &&
                     widget.onDelete != null)
                   Container(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

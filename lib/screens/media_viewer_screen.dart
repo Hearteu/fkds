@@ -76,7 +76,10 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.black.withOpacity(0.7), Colors.transparent],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.7),
+                    Colors.transparent
+                  ],
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 40),
@@ -111,7 +114,10 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.8),
+                    Colors.transparent
+                  ],
                 ),
               ),
               padding: const EdgeInsets.all(20),
@@ -181,7 +187,7 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -208,7 +214,7 @@ class _MediaViewerScreenState extends State<MediaViewerScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
