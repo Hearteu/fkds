@@ -249,7 +249,7 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity( 0.9),
+                  color: Colors.white.withOpacity(0.9),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50)),
@@ -263,7 +263,7 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity( 0.9),
+                          color: Colors.white.withOpacity(0.9),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -307,29 +307,106 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity( 0.7),
+                          Colors.black.withOpacity(0.7),
                         ],
                       ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.adventure.title,
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (widget.adventure.location != null)
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.adventure.location!,
+                                style: GoogleFonts.lato(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          // Pinned header with title, location, date, and description
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _AdventureHeaderDelegate(
-              adventure: widget.adventure,
-              mediaCount: mediaItems.length,
-            ),
-          ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('MMMM dd, yyyy')
+                            .format(widget.adventure.date),
+                        style: GoogleFonts.lato(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${mediaItems.length} photos',
+                          style: GoogleFonts.lato(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    widget.adventure.description,
+                    style: GoogleFonts.lato(
+                      fontSize: 16,
+                      color: Colors.grey[700],
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
                   Row(
                     children: [
                       Text(
@@ -491,128 +568,6 @@ class _AdventureDetailScreenState extends State<AdventureDetailScreen> {
   }
 }
 
-// Custom delegate for the pinned header
-class _AdventureHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final Adventure adventure;
-  final int mediaCount;
-
-  _AdventureHeaderDelegate({
-    required this.adventure,
-    required this.mediaCount,
-  });
-
-  @override
-  double get minExtent => 200; // Minimum height when collapsed
-  @override
-  double get maxExtent => 200; // Maximum height when expanded
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            Text(
-              adventure.title,
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF2C3E50),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            // Location and Date row
-            Row(
-              children: [
-                if (adventure.location != null) ...[
-                  Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    adventure.location!,
-                    style: GoogleFonts.lato(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                Icon(
-                  Icons.calendar_today,
-                  size: 16,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  DateFormat('MMM dd, yyyy').format(adventure.date),
-                  style: GoogleFonts.lato(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '$mediaCount photos',
-                    style: GoogleFonts.lato(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Description
-            Expanded(
-              child: Text(
-                adventure.description,
-                style: GoogleFonts.lato(
-                  fontSize: 15,
-                  color: Colors.grey[700],
-                  height: 1.5,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Bottom border
-            Container(
-              height: 1,
-              color: Colors.grey[200],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_AdventureHeaderDelegate oldDelegate) {
-    return adventure != oldDelegate.adventure ||
-        mediaCount != oldDelegate.mediaCount;
-  }
-}
-
 class MediaThumbnail extends StatefulWidget {
   final MediaItem mediaItem;
   final VoidCallback onTap;
@@ -681,7 +636,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                 ),
                 if (widget.mediaItem.type == MediaType.video)
                   Container(
-                    color: Colors.black.withOpacity( 0.3),
+                    color: Colors.black.withOpacity(0.3),
                     child: const Center(
                       child: Icon(
                         Icons.play_circle_outline,
@@ -695,8 +650,8 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                   Container(
                     decoration: BoxDecoration(
                       color: widget.isSelected
-                          ? Colors.blue.withOpacity( 0.4)
-                          : Colors.black.withOpacity( 0.2),
+                          ? Colors.blue.withOpacity(0.4)
+                          : Colors.black.withOpacity(0.2),
                       border: widget.isSelected
                           ? Border.all(color: Colors.blue, width: 3)
                           : null,
@@ -712,7 +667,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                         shape: BoxShape.circle,
                         color: widget.isSelected
                             ? Colors.blue
-                            : Colors.white.withOpacity( 0.9),
+                            : Colors.white.withOpacity(0.9),
                       ),
                       padding: const EdgeInsets.all(4),
                       child: Icon(
@@ -730,7 +685,7 @@ class _MediaThumbnailState extends State<MediaThumbnail> {
                     !widget.isSelectionMode &&
                     widget.onDelete != null)
                   Container(
-                    color: Colors.black.withOpacity( 0.5),
+                    color: Colors.black.withOpacity(0.5),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
