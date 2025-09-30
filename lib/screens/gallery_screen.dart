@@ -66,29 +66,55 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF2C3E50),
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            offset: const Offset(0, 2),
+                            blurRadius: 4,
+                            color: Colors.black.withOpacity(0.5),
+                          ),
+                        ],
                       ),
                     ),
                     centerTitle: true,
-                    background: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.blue.shade50,
-                            Colors.purple.shade50,
-                            Colors.pink.shade50,
-                          ],
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Background Image - you can replace this URL with your own
+                        Image.network(
+                          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&auto=format&fit=crop',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback to gradient if image fails to load
+                            return Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.blue.shade50,
+                                    Colors.purple.shade50,
+                                    Colors.pink.shade50,
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.photo_library_rounded,
-                          size: 80,
-                          color: Colors.white.withOpacity(0.3),
+                        // Gradient overlay for better text readability
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.3),
+                                Colors.black.withOpacity(0.6),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),

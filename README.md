@@ -74,41 +74,46 @@ If no data exists in Supabase, the app automatically shows beautiful sample imag
 
 ## 🎨 Customization
 
-### Changing Colors
+Make it yours! Full customization guide available: **[CUSTOMIZATION.md](CUSTOMIZATION.md)**
 
-Edit the theme in `lib/main.dart`:
+### Quick Customizations
 
+**Change header image** (`lib/screens/gallery_screen.dart`):
 ```dart
-colorScheme: ColorScheme.fromSeed(
-  seedColor: const Color(0xFF667EEA), // Change this color
-  brightness: Brightness.light,
-),
+Image.network('YOUR_IMAGE_URL', fit: BoxFit.cover)
 ```
 
-### Changing Fonts
+**Change main color** (`lib/main.dart`):
+```dart
+seedColor: const Color(0xFF667EEA), // Try: 0xFF0EA5E9 for ocean blue
+```
 
-The app uses Google Fonts (currently Playfair Display for titles and Lato for body text). You can change them in the respective screen files.
+**Change title** (`lib/screens/gallery_screen.dart`):
+```dart
+'Our Adventures' // Change to anything you want!
+```
 
-### Modifying Layout
-
-- **Gallery grid**: Edit `SliverGridDelegateWithMaxCrossAxisExtent` in `lib/screens/gallery_screen.dart`
-- **Card design**: Customize `AdventureCard` widget styling
-- **Detail view**: Modify `lib/screens/adventure_detail_screen.dart`
+**See [CUSTOMIZATION.md](CUSTOMIZATION.md) for complete guide**
 
 ## 📁 Project Structure
 
 ```
 lib/
 ├── main.dart                           # App entry point
+├── config/
+│   └── supabase_config.dart            # Supabase credentials
+├── services/
+│   └── supabase_service.dart           # Backend operations
 ├── models/
 │   ├── adventure.dart                  # Adventure data model
 │   └── media_item.dart                 # Media item model
 ├── screens/
 │   ├── gallery_screen.dart             # Main gallery view
+│   ├── add_adventure_screen.dart       # Upload interface
 │   ├── adventure_detail_screen.dart    # Adventure detail page
 │   └── media_viewer_screen.dart        # Full-screen media viewer
 └── data/
-    └── sample_data.dart                # Sample adventure data
+    └── sample_data.dart                # Sample/fallback data
 ```
 
 ## 🛠️ Built With
@@ -149,6 +154,8 @@ Currently optimized for:
 2. **Consistent Naming**: Use descriptive filenames for better organization
 3. **Regular Backups**: Keep backups of your media files
 4. **Mobile Testing**: Test on different screen sizes for responsive behavior
+5. **Customize**: Check [CUSTOMIZATION.md](CUSTOMIZATION.md) to personalize your gallery!
+6. **Free Hosting**: Deploy to GitHub Pages - it's free and automatic!
 
 ## 🌐 Deployment
 
