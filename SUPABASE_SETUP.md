@@ -18,6 +18,17 @@ Your Supabase credentials are already configured:
 4. Copy and run the following SQL script:
 
 ```sql
+-- Create app_settings table (for header image, app title, etc.)
+CREATE TABLE app_settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  header_image_url TEXT NOT NULL,
+  app_title TEXT,
+  app_subtitle TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
 -- Create adventures table
 CREATE TABLE adventures (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -46,15 +57,28 @@ CREATE TABLE media_items (
 CREATE INDEX media_items_adventure_id_idx ON media_items(adventure_id);
 
 -- Enable Row Level Security
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE adventures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE media_items ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for public access (you can customize these later)
+CREATE POLICY "Allow public read access" ON app_settings
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow public update access" ON app_settings
+  FOR UPDATE USING (true);
+
+CREATE POLICY "Allow public insert access" ON app_settings
+  FOR INSERT WITH CHECK (true);
+
 CREATE POLICY "Allow public read access" ON adventures
   FOR SELECT USING (true);
 
 CREATE POLICY "Allow public insert access" ON adventures
   FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Allow public update access" ON adventures
+  FOR UPDATE USING (true);
 
 CREATE POLICY "Allow public delete access" ON adventures
   FOR DELETE USING (true);
@@ -67,6 +91,15 @@ CREATE POLICY "Allow public insert access" ON media_items
 
 CREATE POLICY "Allow public delete access" ON media_items
   FOR DELETE USING (true);
+
+-- Insert default app settings
+INSERT INTO app_settings (id, header_image_url, app_title, app_subtitle)
+VALUES (
+  1,
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&auto=format&fit=crop',
+  'Our Adventures',
+  'A collection of our favorite moments'
+);
 ```
 
 5. Click **Run** (or press F5)

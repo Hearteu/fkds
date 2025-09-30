@@ -6,10 +6,47 @@ import 'package:uuid/uuid.dart';
 import '../config/supabase_config.dart';
 import '../models/adventure.dart';
 import '../models/media_item.dart';
+import '../models/app_settings.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
   static const _uuid = Uuid();
+
+  // Get app settings (header image, title, etc.)
+  static Future<AppSettings> getAppSettings() async {
+    try {
+      final response = await _client
+          .from('app_settings')
+          .select()
+          .limit(1)
+          .maybeSingle();
+
+      if (response == null) {
+        return AppSettings.getDefault();
+      }
+
+      return AppSettings.fromJson(response);
+    } catch (e) {
+      print('Error fetching app settings: $e');
+      return AppSettings.getDefault();
+    }
+  }
+
+  // Update app settings
+  static Future<bool> updateAppSettings(AppSettings settings) async {
+    try {
+      await _client.from('app_settings').upsert(
+        {
+          'id': 1, // Single row for app settings
+          ...settings.toJson(),
+        },
+      );
+      return true;
+    } catch (e) {
+      print('Error updating app settings: $e');
+      return false;
+    }
+  }
 
   // Get all adventures
   static Future<List<Adventure>> getAdventures() async {
@@ -176,6 +213,36 @@ class SupabaseService {
       return true;
     } catch (e) {
       print('Error deleting media item: $e');
+      return false;
+    }
+  }
+
+  // Update an adventure
+  static Future<bool> updateAdventure({
+    required String adventureId,
+    required String title,
+    required String description,
+    required DateTime date,
+    String? location,
+    String? coverImage,
+  }) async {
+    try {
+      final updateData = {
+        'title': title,
+        'description': description,
+        'date': date.toIso8601String(),
+        'location': location,
+      };
+
+      if (coverImage != null) {
+        updateData['cover_image'] = coverImage;
+      }
+
+      await _client.from('adventures').update(updateData).eq('id', adventureId);
+
+      return true;
+    } catch (e) {
+      print('Error updating adventure: $e');
       return false;
     }
   }

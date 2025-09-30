@@ -4,9 +4,12 @@ import 'package:intl/intl.dart';
 
 import '../data/sample_data.dart';
 import '../models/adventure.dart';
+import '../models/app_settings.dart';
 import '../services/supabase_service.dart';
 import 'add_adventure_screen.dart';
 import 'adventure_detail_screen.dart';
+import 'edit_adventure_screen.dart';
+import 'settings_screen.dart';
 
 class GalleryScreen extends StatefulWidget {
   const GalleryScreen({super.key});
@@ -17,6 +20,7 @@ class GalleryScreen extends StatefulWidget {
 
 class _GalleryScreenState extends State<GalleryScreen> {
   List<Adventure> adventures = [];
+  AppSettings appSettings = AppSettings.getDefault();
   bool _isLoading = true;
   bool _useSampleData = false;
 
@@ -32,8 +36,10 @@ class _GalleryScreenState extends State<GalleryScreen> {
     });
 
     final fetchedAdventures = await SupabaseService.getAdventures();
+    final fetchedSettings = await SupabaseService.getAppSettings();
 
     setState(() {
+      appSettings = fetchedSettings;
       if (fetchedAdventures.isEmpty) {
         // If no data from Supabase, use sample data
         adventures = SampleData.getAdventures();
@@ -60,9 +66,26 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   expandedHeight: 200,
                   backgroundColor: Colors.white,
                   elevation: 0,
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.settings_outlined),
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SettingsScreen(),
+                          ),
+                        );
+                        if (result == true) {
+                          _loadAdventures();
+                        }
+                      },
+                      tooltip: 'Settings',
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     title: Text(
-                      'Our Adventures',
+                      appSettings.appTitle ?? 'Our Adventures',
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -80,9 +103,9 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Background Image - you can replace this URL with your own
+                        // Background Image from Supabase settings
                         Image.network(
-                          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&auto=format&fit=crop',
+                          appSettings.headerImageUrl,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             // Fallback to gradient if image fails to load
@@ -124,7 +147,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
                     child: Column(
                       children: [
                         Text(
-                          'A collection of our favorite moments',
+                          appSettings.appSubtitle ??
+                              'A collection of our favorite moments',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.lato(
                             fontSize: 16,
@@ -180,21 +204,37 @@ class _GalleryScreenState extends State<GalleryScreen> {
                       crossAxisSpacing: 20,
                       childAspectRatio: 0.85,
                     ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      return AdventureCard(
-                        adventure: adventures[index],
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AdventureDetailScreen(
-                                adventure: adventures[index],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }, childCount: adventures.length),
+                     delegate: SliverChildBuilderDelegate((context, index) {
+                       return AdventureCard(
+                         adventure: adventures[index],
+                         onTap: () {
+                           Navigator.push(
+                             context,
+                             MaterialPageRoute(
+                               builder: (context) => AdventureDetailScreen(
+                                 adventure: adventures[index],
+                               ),
+                             ),
+                           );
+                         },
+                         onEdit: !_useSampleData
+                             ? () async {
+                                 final result = await Navigator.push(
+                                   context,
+                                   MaterialPageRoute(
+                                     builder: (context) =>
+                                         EditAdventureScreen(
+                                       adventure: adventures[index],
+                                     ),
+                                   ),
+                                 );
+                                 if (result == true) {
+                                   _loadAdventures();
+                                 }
+                               }
+                             : null,
+                       );
+                     }, childCount: adventures.length),
                   ),
                 ),
                 const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
@@ -229,11 +269,13 @@ class _GalleryScreenState extends State<GalleryScreen> {
 class AdventureCard extends StatefulWidget {
   final Adventure adventure;
   final VoidCallback onTap;
+  final VoidCallback? onEdit;
 
   const AdventureCard({
     super.key,
     required this.adventure,
     required this.onTap,
+    this.onEdit,
   });
 
   @override
@@ -274,31 +316,49 @@ class _AdventureCardState extends State<AdventureCard> {
                 // Image
                 Expanded(
                   flex: 3,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                      image: DecorationImage(
-                        image: NetworkImage(widget.adventure.coverImage),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
+                  child: Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                          image: DecorationImage(
+                            image: NetworkImage(widget.adventure.coverImage),
+                            fit: BoxFit.cover,
+                          ),
                         ),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.4),
-                          ],
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(20),
+                            ),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.4),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      if (widget.onEdit != null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: IconButton(
+                            icon: const Icon(Icons.edit_outlined),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.white.withOpacity(0.9),
+                              foregroundColor: const Color(0xFF667EEA),
+                            ),
+                            onPressed: widget.onEdit,
+                            tooltip: 'Edit Adventure',
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 // Content
