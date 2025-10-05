@@ -50,3 +50,4 @@ app.*.map.json
 # Supabase - DO NOT commit credentials in production!
 # For this project, credentials are already in the code
 # In production, use environment variables
+.fake

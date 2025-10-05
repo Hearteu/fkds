@@ -67,6 +67,13 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   elevation: 0,
                   actions: [
                     IconButton(
+                      icon: const Icon(Icons.celebration),
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/bday');
+                      },
+                      tooltip: 'Birthday Wishes',
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.settings_outlined),
                       onPressed: () async {
                         final result = await Navigator.push(

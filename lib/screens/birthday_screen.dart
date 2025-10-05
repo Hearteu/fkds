@@ -1,0 +1,475 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class BirthdayScreen extends StatefulWidget {
+  const BirthdayScreen({super.key});
+
+  @override
+  State<BirthdayScreen> createState() => _BirthdayScreenState();
+}
+
+class _BirthdayScreenState extends State<BirthdayScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
+  late AnimationController _slideController;
+  late AnimationController _rotationController;
+  
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _rotationAnimation;
+
+  final List<ConfettiParticle> _confetti = [];
+  final Random _random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize animation controllers
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    );
+
+    // Initialize animations
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+    );
+    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
+    );
+    _rotationAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _rotationController, curve: Curves.linear),
+    );
+
+    // Start animations
+    _startAnimations();
+    _generateConfetti();
+  }
+
+  void _startAnimations() {
+    _fadeController.forward();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _scaleController.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 600), () {
+      _slideController.forward();
+    });
+    _rotationController.repeat();
+  }
+
+  void _generateConfetti() {
+    for (int i = 0; i < 50; i++) {
+      _confetti.add(ConfettiParticle(
+        x: _random.nextDouble(),
+        y: _random.nextDouble(),
+        color: _getRandomColor(),
+        size: _random.nextDouble() * 8 + 4,
+        speed: _random.nextDouble() * 2 + 1,
+        rotation: _random.nextDouble() * 360,
+      ));
+    }
+  }
+
+  Color _getRandomColor() {
+    final colors = [
+      Colors.pink,
+      Colors.purple,
+      Colors.blue,
+      Colors.yellow,
+      Colors.green,
+      Colors.orange,
+      Colors.red,
+      Colors.cyan,
+    ];
+    return colors[_random.nextInt(colors.length)];
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _scaleController.dispose();
+    _slideController.dispose();
+    _rotationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF667EEA),
+              Color(0xFF764BA2),
+              Color(0xFFF093FB),
+              Color(0xFFF5576C),
+            ],
+            stops: [0.0, 0.3, 0.7, 1.0],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Animated background elements
+            ...List.generate(20, (index) => _buildFloatingBalloon(index)),
+            
+            // Confetti particles
+            ..._confetti.map((particle) => _buildConfettiParticle(particle)),
+            
+            // Main content
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Birthday cake icon with rotation
+                    AnimatedBuilder(
+                      animation: _rotationAnimation,
+                      builder: (context, child) {
+                        return Transform.rotate(
+                          angle: _rotationAnimation.value * 2 * pi * 0.1,
+                          child: FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      Colors.white.withOpacity(0.3),
+                                      Colors.white.withOpacity(0.1),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withOpacity(0.3),
+                                      blurRadius: 20,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.cake,
+                                  size: 60,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 40),
+                    
+                    // Main birthday message
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Column(
+                          children: [
+                            Text(
+                              '🎉 Happy Birthday! 🎉',
+                              style: GoogleFonts.pacifico(
+                                fontSize: 36,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                shadows: [
+                                  const Shadow(
+                                    offset: Offset(2, 2),
+                                    blurRadius: 4,
+                                    color: Colors.black26,
+                                  ),
+                                ],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            
+                            const SizedBox(height: 20),
+                            
+                            Text(
+                              'May your special day be filled with\njoy, laughter, and wonderful memories!',
+                              style: GoogleFonts.lato(
+                                fontSize: 18,
+                                color: Colors.white,
+                                height: 1.5,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            
+                            const SizedBox(height: 40),
+                            
+                            // Birthday wishes cards
+                            _buildWishCard(
+                              '🎂',
+                              'Another Year Wiser',
+                              'Age is just a number, and you\'re making it look amazing!',
+                            ),
+                            
+                            const SizedBox(height: 20),
+                            
+                            _buildWishCard(
+                              '🎈',
+                              'Endless Joy',
+                              'May happiness follow you wherever you go!',
+                            ),
+                            
+                            const SizedBox(height: 20),
+                            
+                            _buildWishCard(
+                              '🎁',
+                              'Amazing Adventures',
+                              'Here\'s to another year of incredible experiences!',
+                            ),
+                            
+                            const SizedBox(height: 40),
+                            
+                            // Celebration button
+                            _buildCelebrationButton(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingBalloon(int index) {
+    return Positioned(
+      left: _random.nextDouble() * MediaQuery.of(context).size.width,
+      top: _random.nextDouble() * MediaQuery.of(context).size.height,
+      child: AnimatedBuilder(
+        animation: _rotationController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(
+              sin(_rotationController.value * 2 * pi + index) * 10,
+              cos(_rotationController.value * 2 * pi + index) * 5,
+            ),
+            child: Opacity(
+              opacity: 0.3,
+              child: Icon(
+                Icons.celebration,
+                size: 30 + (index % 3) * 10,
+                color: Colors.white.withOpacity(0.6),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildConfettiParticle(ConfettiParticle particle) {
+    return Positioned(
+      left: particle.x * MediaQuery.of(context).size.width,
+      top: particle.y * MediaQuery.of(context).size.height,
+      child: AnimatedBuilder(
+        animation: _rotationController,
+        builder: (context, child) {
+          return Transform.rotate(
+            angle: particle.rotation + (_rotationController.value * 2 * pi),
+            child: Container(
+              width: particle.size,
+              height: particle.size,
+              decoration: BoxDecoration(
+                color: particle.color,
+                borderRadius: BorderRadius.circular(particle.size / 2),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildWishCard(String emoji, String title, String message) {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Text(
+              emoji,
+              style: const TextStyle(fontSize: 40),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    message,
+                    style: GoogleFonts.lato(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCelebrationButton() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        width: double.infinity,
+        height: 60,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Colors.white, Colors.white70],
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () {
+              // Add celebration effect
+              _triggerCelebration();
+            },
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '🎊',
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Celebrate!',
+                    style: GoogleFonts.lato(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF667EEA),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    '🎊',
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _triggerCelebration() {
+    // Restart animations for celebration effect
+    _scaleController.reset();
+    _scaleController.forward();
+    
+    // Add more confetti
+    for (int i = 0; i < 20; i++) {
+      _confetti.add(ConfettiParticle(
+        x: _random.nextDouble(),
+        y: 0,
+        color: _getRandomColor(),
+        size: _random.nextDouble() * 8 + 4,
+        speed: _random.nextDouble() * 3 + 2,
+        rotation: _random.nextDouble() * 360,
+      ));
+    }
+    
+    setState(() {});
+  }
+}
+
+class ConfettiParticle {
+  final double x;
+  final double y;
+  final Color color;
+  final double size;
+  final double speed;
+  final double rotation;
+
+  ConfettiParticle({
+    required this.x,
+    required this.y,
+    required this.color,
+    required this.size,
+    required this.speed,
+    required this.rotation,
+  });
+}

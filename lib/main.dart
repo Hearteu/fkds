@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'screens/gallery_screen.dart';
+import 'screens/birthday_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +39,11 @@ class MyApp extends StatelessWidget {
           foregroundColor: Color(0xFF2C3E50),
         ),
       ),
-      home: const GalleryScreen(),
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const GalleryScreen(),
+              '/bday': (context) => const BirthdayScreen(),
+            },
     );
   }
 }
