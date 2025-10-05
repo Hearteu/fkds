@@ -1,6 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../services/supabase_service.dart';
 
 class BirthdayScreen extends StatefulWidget {
   const BirthdayScreen({super.key});
@@ -23,6 +26,22 @@ class _BirthdayScreenState extends State<BirthdayScreen>
 
   final List<ConfettiParticle> _confetti = [];
   final Random _random = Random();
+  
+  // Photo collage management
+  List<String> _backgroundPhotos = [
+    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&auto=format&fit=crop',
+  ];
+  bool _showPhotoManagement = false;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -118,29 +137,45 @@ class _BirthdayScreenState extends State<BirthdayScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
-              Color(0xFFF093FB),
-              Color(0xFFF5576C),
-            ],
-            stops: [0.0, 0.3, 0.7, 1.0],
+      body: Stack(
+        children: [
+          // Photo collage background
+          _buildPhotoCollage(),
+          
+          // Gradient overlay
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.black.withOpacity(0.3),
+                  Colors.black.withOpacity(0.5),
+                  Colors.black.withOpacity(0.4),
+                  Colors.black.withOpacity(0.6),
+                ],
+                stops: const [0.0, 0.3, 0.7, 1.0],
+              ),
+            ),
           ),
-        ),
-        child: Stack(
-          children: [
-            // Animated background elements
-            ...List.generate(20, (index) => _buildFloatingBalloon(index)),
-            
-            // Confetti particles
-            ..._confetti.map((particle) => _buildConfettiParticle(particle)),
-            
-            // Main content
+          
+          // Photo management button
+          Positioned(
+            top: 50,
+            right: 20,
+            child: _buildPhotoManagementButton(),
+          ),
+          
+          // Animated background elements
+          ...List.generate(20, (index) => _buildFloatingBalloon(index)),
+          
+          // Confetti particles
+          ..._confetti.map((particle) => _buildConfettiParticle(particle)),
+          
+          // Photo management panel
+          _buildPhotoManagementPanel(),
+          
+          // Main content
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -453,6 +488,74 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     }
     
     setState(() {});
+  }
+
+  void _togglePhotoManagement() {
+    setState(() {
+      _showPhotoManagement = !_showPhotoManagement;
+    });
+  }
+
+  Future<void> _addPhoto() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
+      if (file.bytes != null) {
+        setState(() {
+          _isUploading = true;
+        });
+
+        try {
+          final uploadedUrl = await SupabaseService.uploadFile(
+            fileBytes: file.bytes!,
+            fileName: 'bday_${DateTime.now().millisecondsSinceEpoch}.${file.extension}',
+            contentType: 'image/${file.extension}',
+          );
+
+          setState(() {
+            _backgroundPhotos.add(uploadedUrl);
+            _isUploading = false;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Photo added to collage!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          setState(() {
+            _isUploading = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: $e')),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  void _removePhoto(int index) {
+    setState(() {
+      _backgroundPhotos.removeAt(index);
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Photo removed from collage'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 }
 
