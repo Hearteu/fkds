@@ -1,8 +1,10 @@
 import 'dart:math';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import '../services/supabase_service.dart';
 
 class BirthdayScreen extends StatefulWidget {
@@ -18,7 +20,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
   late AnimationController _scaleController;
   late AnimationController _slideController;
   late AnimationController _rotationController;
-  
+
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
@@ -26,7 +28,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
 
   final List<ConfettiParticle> _confetti = [];
   final Random _random = Random();
-  
+
   // Photo collage management
   List<String> _backgroundPhotos = [
     'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&auto=format&fit=crop',
@@ -46,7 +48,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animation controllers
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1500),
@@ -141,7 +143,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
         children: [
           // Photo collage background
           _buildPhotoCollage(),
-          
+
           // Gradient overlay
           Container(
             decoration: BoxDecoration(
@@ -158,145 +160,333 @@ class _BirthdayScreenState extends State<BirthdayScreen>
               ),
             ),
           ),
-          
+
           // Photo management button
           Positioned(
             top: 50,
             right: 20,
             child: _buildPhotoManagementButton(),
           ),
-          
+
           // Animated background elements
           ...List.generate(20, (index) => _buildFloatingBalloon(index)),
-          
+
           // Confetti particles
           ..._confetti.map((particle) => _buildConfettiParticle(particle)),
-          
+
           // Photo management panel
           _buildPhotoManagementPanel(),
-          
+
           // Main content
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Birthday cake icon with rotation
-                    AnimatedBuilder(
-                      animation: _rotationAnimation,
-                      builder: (context, child) {
-                        return Transform.rotate(
-                          angle: _rotationAnimation.value * 2 * pi * 0.1,
-                          child: FadeTransition(
-                            opacity: _fadeAnimation,
-                            child: ScaleTransition(
-                              scale: _scaleAnimation,
-                              child: Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: RadialGradient(
-                                    colors: [
-                                      Colors.white.withOpacity(0.3),
-                                      Colors.white.withOpacity(0.1),
-                                    ],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.white.withOpacity(0.3),
-                                      blurRadius: 20,
-                                      spreadRadius: 5,
-                                    ),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Birthday cake icon with rotation
+                  AnimatedBuilder(
+                    animation: _rotationAnimation,
+                    builder: (context, child) {
+                      return Transform.rotate(
+                        angle: _rotationAnimation.value * 2 * pi * 0.1,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: ScaleTransition(
+                            scale: _scaleAnimation,
+                            child: Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    Colors.white.withOpacity(0.3),
+                                    Colors.white.withOpacity(0.1),
                                   ],
                                 ),
-                                child: const Icon(
-                                  Icons.cake,
-                                  size: 60,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Main birthday message
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: Column(
-                          children: [
-                            Text(
-                              '🎉 Happy Birthday! 🎉',
-                              style: GoogleFonts.pacifico(
-                                fontSize: 36,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                shadows: [
-                                  const Shadow(
-                                    offset: Offset(2, 2),
-                                    blurRadius: 4,
-                                    color: Colors.black26,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.3),
+                                    blurRadius: 20,
+                                    spreadRadius: 5,
                                   ),
                                 ],
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                            
-                            const SizedBox(height: 20),
-                            
-                            Text(
-                              'May your special day be filled with\njoy, laughter, and wonderful memories!',
-                              style: GoogleFonts.lato(
-                                fontSize: 18,
+                              child: const Icon(
+                                Icons.cake,
+                                size: 60,
                                 color: Colors.white,
-                                height: 1.5,
-                                fontWeight: FontWeight.w400,
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                            
-                            const SizedBox(height: 40),
-                            
-                            // Birthday wishes cards
-                            _buildWishCard(
-                              '🎂',
-                              'Another Year Wiser',
-                              'Age is just a number, and you\'re making it look amazing!',
-                            ),
-                            
-                            const SizedBox(height: 20),
-                            
-                            _buildWishCard(
-                              '🎈',
-                              'Endless Joy',
-                              'May happiness follow you wherever you go!',
-                            ),
-                            
-                            const SizedBox(height: 20),
-                            
-                            _buildWishCard(
-                              '🎁',
-                              'Amazing Adventures',
-                              'Here\'s to another year of incredible experiences!',
-                            ),
-                            
-                            const SizedBox(height: 40),
-                            
-                            // Celebration button
-                            _buildCelebrationButton(),
-                          ],
+                          ),
                         ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Main birthday message
+                  FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Column(
+                        children: [
+                          Text(
+                            '🎉 Happy Birthday! 🎉',
+                            style: GoogleFonts.pacifico(
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: [
+                                const Shadow(
+                                  offset: Offset(2, 2),
+                                  blurRadius: 4,
+                                  color: Colors.black26,
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          Text(
+                            'May your special day be filled with\njoy, laughter, and wonderful memories!',
+                            style: GoogleFonts.lato(
+                              fontSize: 18,
+                              color: Colors.white,
+                              height: 1.5,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+
+                          const SizedBox(height: 40),
+
+                          // Birthday wishes cards
+                          _buildWishCard(
+                            '🎂',
+                            'Another Year Wiser',
+                            'Age is just a number, and you\'re making it look amazing!',
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _buildWishCard(
+                            '🎈',
+                            'Endless Joy',
+                            'May happiness follow you wherever you go!',
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          _buildWishCard(
+                            '🎁',
+                            'Amazing Adventures',
+                            'Here\'s to another year of incredible experiences!',
+                          ),
+
+                          const SizedBox(height: 40),
+
+                          // Celebration button
+                          _buildCelebrationButton(),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoCollage() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      child: Stack(
+        children: [
+          // Photo grid with overlapping effect
+          ...List.generate(_backgroundPhotos.length, (index) {
+            return Positioned(
+              left: (index % 3) * (MediaQuery.of(context).size.width / 3) +
+                  (_random.nextDouble() - 0.5) * 50,
+              top: (index ~/ 3) * (MediaQuery.of(context).size.height / 4) +
+                  (_random.nextDouble() - 0.5) * 50,
+              child: Transform.rotate(
+                angle: (_random.nextDouble() - 0.5) * 0.5,
+                child: Container(
+                  width: 200.0 + _random.nextInt(100).toDouble(),
+                  height: 150.0 + _random.nextInt(80).toDouble(),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(5, 5),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: CachedNetworkImage(
+                      imageUrl: _backgroundPhotos[index],
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey[300],
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error),
+                      ),
+                    ),
+                  ),
                 ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoManagementButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
+      ),
+      child: IconButton(
+        icon: Icon(
+          _showPhotoManagement ? Icons.close : Icons.photo_library,
+          color: Colors.white,
+        ),
+        onPressed: _togglePhotoManagement,
+        tooltip:
+            _showPhotoManagement ? 'Hide Photo Management' : 'Manage Photos',
+      ),
+    );
+  }
+
+  Widget _buildPhotoManagementPanel() {
+    if (!_showPhotoManagement) return const SizedBox.shrink();
+
+    return Positioned(
+      top: 100,
+      right: 20,
+      child: Container(
+        width: 300,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.95),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Background Photos',
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF2C3E50),
+              ),
+            ),
+            const SizedBox(height: 15),
+
+            // Add photo button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isUploading ? null : _addPhoto,
+                icon: _isUploading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add_photo_alternate, size: 18),
+                label: Text(
+                  _isUploading ? 'Uploading...' : 'Add Photo',
+                  style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF667EEA),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            // Photo grid
+            Container(
+              height: 200,
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: _backgroundPhotos.length,
+                itemBuilder: (context, index) {
+                  return Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: CachedNetworkImage(
+                          imageUrl: _backgroundPhotos[index],
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => _removePhoto(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.8),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -474,7 +664,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     // Restart animations for celebration effect
     _scaleController.reset();
     _scaleController.forward();
-    
+
     // Add more confetti
     for (int i = 0; i < 20; i++) {
       _confetti.add(ConfettiParticle(
@@ -486,7 +676,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
         rotation: _random.nextDouble() * 360,
       ));
     }
-    
+
     setState(() {});
   }
 
@@ -512,22 +702,38 @@ class _BirthdayScreenState extends State<BirthdayScreen>
         try {
           final uploadedUrl = await SupabaseService.uploadFile(
             fileBytes: file.bytes!,
-            fileName: 'bday_${DateTime.now().millisecondsSinceEpoch}.${file.extension}',
-            contentType: 'image/${file.extension}',
+            fileName:
+                'bday_${DateTime.now().millisecondsSinceEpoch}.${file.extension ?? 'jpg'}',
+            contentType: 'image/${file.extension ?? 'jpg'}',
           );
 
-          setState(() {
-            _backgroundPhotos.add(uploadedUrl);
-            _isUploading = false;
-          });
+          if (uploadedUrl != null) {
+            setState(() {
+              _backgroundPhotos.add(uploadedUrl);
+              _isUploading = false;
+            });
 
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Photo added to collage!'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Photo added to collage!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } else {
+            setState(() {
+              _isUploading = false;
+            });
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to upload photo'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         } catch (e) {
           setState(() {
@@ -547,7 +753,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     setState(() {
       _backgroundPhotos.removeAt(index);
     });
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
