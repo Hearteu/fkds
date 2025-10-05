@@ -91,7 +91,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                   ],
                   flexibleSpace: FlexibleSpaceBar(
                     title: Text(
-                      appSettings.appTitle ?? 'Our Adventures',
+                      appSettings.appTitle ?? 'Something Somewhere Somehow',
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,

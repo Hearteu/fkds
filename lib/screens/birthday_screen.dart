@@ -1,11 +1,11 @@
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/supabase_service.dart';
+import 'photo_management_screen.dart';
 
 class BirthdayScreen extends StatefulWidget {
   const BirthdayScreen({super.key});
@@ -28,6 +28,12 @@ class _BirthdayScreenState extends State<BirthdayScreen>
 
   final List<ConfettiParticle> _confetti = [];
   final Random _random = Random();
+
+  // Hover state management
+  Set<int> _hoveredPhotos = <int>{};
+
+  // Pre-calculated photo positions for consistency
+  List<Map<String, double>> _photoPositions = [];
 
   // Photo collage management
   List<String> _backgroundPhotos = [
@@ -52,8 +58,6 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop',
   ];
-  bool _showPhotoManagement = false;
-  bool _isUploading = false;
 
   @override
   void initState() {
@@ -97,6 +101,8 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     // Start animations
     _startAnimations();
     _generateConfetti();
+    _loadBirthdayPhotos();
+    _calculatePhotoPositions();
   }
 
   void _startAnimations() {
@@ -120,6 +126,45 @@ class _BirthdayScreenState extends State<BirthdayScreen>
         speed: _random.nextDouble() * 2 + 1,
         rotation: _random.nextDouble() * 360,
       ));
+    }
+  }
+
+  Future<void> _loadBirthdayPhotos() async {
+    try {
+      final savedPhotos = await SupabaseService.getBirthdayPhotos();
+      if (savedPhotos.isNotEmpty) {
+        setState(() {
+          _backgroundPhotos = savedPhotos;
+        });
+        // Recalculate positions with new photos
+        _calculatePhotoPositions();
+      }
+    } catch (e) {
+      print('Error loading birthday photos: $e');
+    }
+  }
+
+  void _calculatePhotoPositions() {
+    _photoPositions.clear();
+    for (int i = 0; i < _backgroundPhotos.length; i++) {
+      final row = i ~/ 4;
+      final col = i % 4;
+
+      final offsetX = (_random.nextDouble() - 0.5) * 100;
+      final offsetY = (_random.nextDouble() - 0.5) * 100;
+      final basePhotoWidth = 200 + _random.nextInt(100).toDouble();
+      final basePhotoHeight = 150 + _random.nextInt(100).toDouble();
+      final rotation = (_random.nextDouble() - 0.5) * 0.3;
+
+      _photoPositions.add({
+        'row': row.toDouble(),
+        'col': col.toDouble(),
+        'offsetX': offsetX,
+        'offsetY': offsetY,
+        'width': basePhotoWidth,
+        'height': basePhotoHeight,
+        'rotation': rotation,
+      });
     }
   }
 
@@ -151,7 +196,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Photo collage background
+          // Photo collage background (non-interactive)
           _buildPhotoCollage(),
 
           // Gradient overlay
@@ -171,21 +216,11 @@ class _BirthdayScreenState extends State<BirthdayScreen>
             ),
           ),
 
-          // Photo management button
-          Positioned(
-            top: 50,
-            right: 20,
-            child: _buildPhotoManagementButton(),
-          ),
-
           // Animated background elements
           ...List.generate(20, (index) => _buildFloatingBalloon(index)),
 
           // Confetti particles
           ..._confetti.map((particle) => _buildConfettiParticle(particle)),
-
-          // Photo management panel
-          _buildPhotoManagementPanel(),
 
           // Main content
           Center(
@@ -260,11 +295,9 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                             ),
                             textAlign: TextAlign.center,
                           ),
-
                           const SizedBox(height: 20),
-
                           Text(
-                            'May your special day be filled with\njoy, laughter, and wonderful memories!',
+                            'You deserve all the love, laughter, and happiness in the world today. \nI hope your heart feels as full and bright as your smile as you make life a little sweeter just by being you. \nI’m so lucky to have you in my life, and I’ll keep being there for you with every day that comes.',
                             style: GoogleFonts.lato(
                               fontSize: 18,
                               color: Colors.white,
@@ -273,33 +306,6 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                             ),
                             textAlign: TextAlign.center,
                           ),
-
-                          const SizedBox(height: 40),
-
-                          // Birthday wishes cards
-                          _buildWishCard(
-                            '🎂',
-                            'Another Year Wiser',
-                            'Age is just a number, and you\'re making it look amazing!',
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          _buildWishCard(
-                            '🎈',
-                            'Endless Joy',
-                            'May happiness follow you wherever you go!',
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          _buildWishCard(
-                            '🎁',
-                            'Amazing Adventures',
-                            'Here\'s to another year of incredible experiences!',
-                          ),
-
-                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
@@ -307,6 +313,13 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                 ],
               ),
             ),
+          ),
+
+          // Photo management button - positioned last for proper z-index
+          Positioned(
+            top: 60,
+            right: 30,
+            child: _buildPhotoManagementButton(),
           ),
         ],
       ),
@@ -316,212 +329,179 @@ class _BirthdayScreenState extends State<BirthdayScreen>
   Widget _buildPhotoCollage() {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
+    // Ensure photo positions are calculated
+    try {
+      if ((_photoPositions.isEmpty || _photoPositions.length == 0) &&
+          _backgroundPhotos.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _calculatePhotoPositions();
+        });
+      }
+    } catch (e) {
+      // If _photoPositions is not initialized, initialize it
+      _photoPositions = [];
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _calculatePhotoPositions();
+      });
+    }
+
     return Container(
       width: double.infinity,
       height: double.infinity,
       child: Stack(
         children: [
-          // Photo grid with overlapping effect - more coverage, no gaps
+          // Photo grid with overlapping effect and hover animations
           ...List.generate(_backgroundPhotos.length, (index) {
-            // Calculate position to cover more area
-            final row = index ~/ 4; // 4 photos per row for better coverage
-            final col = index % 4;
-            
-            // Base positions with minimal spacing
-            final baseLeft = (col * screenWidth / 4) - 50; // Start slightly off-screen
-            final baseTop = (row * screenHeight / 5) - 50; // Start slightly off-screen
-            
-            // Add small random offset for natural look
-            final offsetX = (_random.nextDouble() - 0.5) * 100;
-            final offsetY = (_random.nextDouble() - 0.5) * 100;
-            
-            // Larger photos for better coverage
-            final photoWidth = (screenWidth / 3) + _random.nextInt(100).toDouble();
-            final photoHeight = (screenHeight / 4) + _random.nextInt(100).toDouble();
-            
-            return Positioned(
-              left: baseLeft + offsetX,
-              top: baseTop + offsetY,
-              child: Transform.rotate(
-                angle: (_random.nextDouble() - 0.5) * 0.3, // Less rotation for better coverage
-                child: Container(
-                  width: photoWidth,
-                  height: photoHeight,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.4),
-                        blurRadius: 8,
-                        offset: const Offset(3, 3),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: _backgroundPhotos[index],
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[300],
-                        child: const Center(child: CircularProgressIndicator()),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[300],
-                        child: const Icon(Icons.error),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
+            return _buildCollagePhoto(index, screenWidth, screenHeight);
           }),
         ],
       ),
     );
   }
 
-  Widget _buildPhotoManagementButton() {
-    return GestureDetector(
-      onTap: _togglePhotoManagement,
-      child: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: Colors.white.withOpacity(0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+  Widget _buildCollagePhoto(
+      int index, double screenWidth, double screenHeight) {
+    final isHovered = _hoveredPhotos.contains(index);
+
+    // Ensure _photoPositions is initialized and has data
+    try {
+      if (_photoPositions.isEmpty || index >= _photoPositions.length) {
+        return const SizedBox.shrink();
+      }
+    } catch (e) {
+      // If _photoPositions is not initialized, return empty widget
+      return const SizedBox.shrink();
+    }
+
+    final position = _photoPositions[index];
+    final row = position['row']!.toInt();
+    final col = position['col']!.toInt();
+
+    // Base positions with minimal spacing
+    final baseLeft = (col * screenWidth / 4) - 50; // Start slightly off-screen
+    final baseTop = (row * screenHeight / 5) - 50; // Start slightly off-screen
+
+    // Use pre-calculated offsets and dimensions
+    final offsetX = position['offsetX']!;
+    final offsetY = position['offsetY']!;
+    final basePhotoWidth = position['width']!;
+    final basePhotoHeight = position['height']!;
+    final rotation = position['rotation']!;
+
+    // Hover dimensions (larger)
+    final hoverPhotoWidth = basePhotoWidth * 1.5;
+    final hoverPhotoHeight = basePhotoHeight * 1.5;
+
+    return Positioned(
+      left: baseLeft + offsetX,
+      top: baseTop + offsetY,
+      child: GestureDetector(
+        onTap: () {
+          print('Photo $index tapped'); // Debug print
+          setState(() {
+            if (_hoveredPhotos.contains(index)) {
+              _hoveredPhotos.remove(index);
+            } else {
+              _hoveredPhotos.add(index);
+            }
+            print('Hovered photos: $_hoveredPhotos'); // Debug print
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          width: isHovered ? hoverPhotoWidth : basePhotoWidth,
+          height: isHovered ? hoverPhotoHeight : basePhotoHeight,
+          child: Transform.rotate(
+            angle: isHovered ? 0.0 : rotation,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(isHovered ? 8 : 12),
+                border: isHovered
+                    ? Border.all(
+                        color: Colors.yellow.withOpacity(0.8),
+                        width: 3,
+                      )
+                    : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isHovered ? 0.6 : 0.4),
+                    blurRadius: isHovered ? 15 : 8,
+                    offset: Offset(0, isHovered ? 8 : 3),
+                  ),
+                  if (isHovered)
+                    BoxShadow(
+                      color: Colors.yellow.withOpacity(0.5),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(isHovered ? 8 : 12),
+                child: CachedNetworkImage(
+                  imageUrl: _backgroundPhotos[index],
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[300],
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.error),
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
-        child: Icon(
-          _showPhotoManagement ? Icons.close : Icons.photo_library,
-          color: Colors.white,
-          size: 24,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPhotoManagementPanel() {
-    if (!_showPhotoManagement) return const SizedBox.shrink();
-
-    return Positioned(
-      top: 100,
-      right: 20,
-      child: Container(
-        width: 300,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.95),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Background Photos',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF2C3E50),
-              ),
-            ),
-            const SizedBox(height: 15),
-
-            // Add photo button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isUploading ? null : _addPhoto,
-                icon: _isUploading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.add_photo_alternate, size: 18),
-                label: Text(
-                  _isUploading ? 'Uploading...' : 'Add Photo',
-                  style: GoogleFonts.lato(fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF667EEA),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            // Photo grid
-            Container(
-              height: 200,
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: _backgroundPhotos.length,
-                itemBuilder: (context, index) {
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: CachedNetworkImage(
-                          imageUrl: _backgroundPhotos[index],
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: Colors.grey[300],
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () => _removePhoto(index),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.8),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 12,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
+  Widget _buildPhotoManagementButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () async {
+          print('Opening photo management screen'); // Debug print
+          final updatedPhotos = await Navigator.push<List<String>>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PhotoManagementScreen(
+                backgroundPhotos: _backgroundPhotos,
+                onPhotosChanged: (photos) {
+                  setState(() {
+                    _backgroundPhotos = photos;
+                  });
                 },
               ),
             ),
-          ],
+          );
+
+          if (updatedPhotos != null) {
+            setState(() {
+              _backgroundPhotos = updatedPhotos;
+            });
+          }
+        },
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+          ),
+          child: Icon(
+            Icons.photo_library,
+            color: Colors.white,
+            size: 18,
+          ),
         ),
       ),
     );
@@ -574,148 +554,6 @@ class _BirthdayScreenState extends State<BirthdayScreen>
         },
       ),
     );
-  }
-
-  Widget _buildWishCard(String emoji, String title, String message) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.3),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Text(
-              emoji,
-              style: const TextStyle(fontSize: 40),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    message,
-                    style: GoogleFonts.lato(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _togglePhotoManagement() {
-    setState(() {
-      _showPhotoManagement = !_showPhotoManagement;
-    });
-  }
-
-  Future<void> _addPhoto() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
-
-    if (result != null && result.files.isNotEmpty) {
-      final file = result.files.first;
-      if (file.bytes != null) {
-        setState(() {
-          _isUploading = true;
-        });
-
-        try {
-          final uploadedUrl = await SupabaseService.uploadFile(
-            fileBytes: file.bytes!,
-            fileName:
-                'bday_${DateTime.now().millisecondsSinceEpoch}.${file.extension ?? 'jpg'}',
-            contentType: 'image/${file.extension ?? 'jpg'}',
-          );
-
-          if (uploadedUrl != null) {
-            setState(() {
-              _backgroundPhotos.add(uploadedUrl);
-              _isUploading = false;
-            });
-
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Photo added to collage!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } else {
-            setState(() {
-              _isUploading = false;
-            });
-
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to upload photo'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        } catch (e) {
-          setState(() {
-            _isUploading = false;
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: $e')),
-            );
-          }
-        }
-      }
-    }
-  }
-
-  void _removePhoto(int index) {
-    setState(() {
-      _backgroundPhotos.removeAt(index);
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Photo removed from collage'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
   }
 }
 

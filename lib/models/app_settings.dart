@@ -33,7 +33,7 @@ class AppSettings {
       id: 'default',
       headerImageUrl:
           'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&auto=format&fit=crop',
-      appTitle: 'Our Adventures',
+      appTitle: 'Something Somewhere Somehow',
       appSubtitle: 'A collection of our favorite moments',
     );
   }

@@ -5,8 +5,8 @@ import 'package:uuid/uuid.dart';
 
 import '../config/supabase_config.dart';
 import '../models/adventure.dart';
-import '../models/media_item.dart';
 import '../models/app_settings.dart';
+import '../models/media_item.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -15,11 +15,8 @@ class SupabaseService {
   // Get app settings (header image, title, etc.)
   static Future<AppSettings> getAppSettings() async {
     try {
-      final response = await _client
-          .from('app_settings')
-          .select()
-          .limit(1)
-          .maybeSingle();
+      final response =
+          await _client.from('app_settings').select().limit(1).maybeSingle();
 
       if (response == null) {
         return AppSettings.getDefault();
@@ -57,8 +54,7 @@ class SupabaseService {
           .order('date', ascending: false);
 
       return (response as List).map((data) {
-        final mediaItems =
-            (data['media_items'] as List?)
+        final mediaItems = (data['media_items'] as List?)
                 ?.map(
                   (item) => MediaItem(
                     id: item['id'].toString(),
@@ -100,9 +96,7 @@ class SupabaseService {
     try {
       final String uniqueFileName = '${_uuid.v4()}_$fileName';
 
-      await _client.storage
-          .from(SupabaseConfig.mediaBucketName)
-          .uploadBinary(
+      await _client.storage.from(SupabaseConfig.mediaBucketName).uploadBinary(
             uniqueFileName,
             fileBytes,
             fileOptions: FileOptions(contentType: contentType, upsert: false),
@@ -116,6 +110,84 @@ class SupabaseService {
     } catch (e) {
       print('Error uploading file: $e');
       return null;
+    }
+  }
+
+  // Birthday photos management
+  static Future<List<String>> getBirthdayPhotos() async {
+    try {
+      final response = await _client
+          .from('birthday_photos')
+          .select('photo_url')
+          .order('created_at', ascending: true);
+
+      return (response as List)
+          .map((item) => item['photo_url'] as String)
+          .toList();
+    } catch (e) {
+      print('Error fetching birthday photos: $e');
+      return [];
+    }
+  }
+
+  static Future<bool> addBirthdayPhoto(String photoUrl) async {
+    try {
+      await _client.from('birthday_photos').insert({
+        'photo_url': photoUrl,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      return true;
+    } catch (e) {
+      print('Error adding birthday photo: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> removeBirthdayPhoto(String photoUrl) async {
+    try {
+      await _client.from('birthday_photos').delete().eq('photo_url', photoUrl);
+      return true;
+    } catch (e) {
+      print('Error removing birthday photo: $e');
+      return false;
+    }
+  }
+
+  static Future<bool> clearBirthdayPhotos() async {
+    try {
+      await _client.from('birthday_photos').delete().neq('id', 0);
+      return true;
+    } catch (e) {
+      print('Error clearing birthday photos: $e');
+      return false;
+    }
+  }
+
+  // Delete a file from Supabase Storage
+  static Future<bool> deleteFile(String fileUrl) async {
+    try {
+      // Extract the filename from the URL
+      final uri = Uri.parse(fileUrl);
+      final pathSegments = uri.pathSegments;
+
+      if (pathSegments.length < 3) {
+        print('Invalid file URL format: $fileUrl');
+        return false;
+      }
+
+      // Get the filename from the URL path
+      final fileName = pathSegments.last;
+
+      // Delete the file from storage
+      await _client.storage
+          .from(SupabaseConfig.mediaBucketName)
+          .remove([fileName]);
+
+      print('Successfully deleted file: $fileName');
+      return true;
+    } catch (e) {
+      print('Error deleting file: $e');
+      return false;
     }
   }
 
@@ -198,7 +270,39 @@ class SupabaseService {
   // Delete an adventure and its media items
   static Future<bool> deleteAdventure(String adventureId) async {
     try {
+      // First, get all media items associated with this adventure to delete their files
+      final mediaItems = await _client
+          .from('media_items')
+          .select('path, thumbnail')
+          .eq('adventure_id', adventureId);
+
+      // Delete from database (this will cascade delete media_items due to foreign key)
       await _client.from('adventures').delete().eq('id', adventureId);
+
+      // Delete all media files from storage
+      for (final mediaItem in mediaItems) {
+        // Delete main file
+        if (mediaItem['path'] != null &&
+            mediaItem['path'].toString().isNotEmpty) {
+          try {
+            await deleteFile(mediaItem['path']);
+          } catch (e) {
+            print('Error deleting main file from storage: $e');
+          }
+        }
+
+        // Delete thumbnail if it exists and is different from main file
+        if (mediaItem['thumbnail'] != null &&
+            mediaItem['thumbnail'].toString().isNotEmpty &&
+            mediaItem['thumbnail'] != mediaItem['path']) {
+          try {
+            await deleteFile(mediaItem['thumbnail']);
+          } catch (e) {
+            print('Error deleting thumbnail from storage: $e');
+          }
+        }
+      }
+
       return true;
     } catch (e) {
       print('Error deleting adventure: $e');
@@ -209,7 +313,40 @@ class SupabaseService {
   // Delete a media item
   static Future<bool> deleteMediaItem(String mediaItemId) async {
     try {
+      // First, get the media item to get the file path for storage deletion
+      final mediaItem = await _client
+          .from('media_items')
+          .select('path, thumbnail')
+          .eq('id', mediaItemId)
+          .maybeSingle();
+
+      // Delete from database
       await _client.from('media_items').delete().eq('id', mediaItemId);
+
+      // Delete files from storage if they exist
+      if (mediaItem != null) {
+        // Delete main file
+        if (mediaItem['path'] != null &&
+            mediaItem['path'].toString().isNotEmpty) {
+          try {
+            await deleteFile(mediaItem['path']);
+          } catch (e) {
+            print('Error deleting main file from storage: $e');
+          }
+        }
+
+        // Delete thumbnail if it exists and is different from main file
+        if (mediaItem['thumbnail'] != null &&
+            mediaItem['thumbnail'].toString().isNotEmpty &&
+            mediaItem['thumbnail'] != mediaItem['path']) {
+          try {
+            await deleteFile(mediaItem['thumbnail']);
+          } catch (e) {
+            print('Error deleting thumbnail from storage: $e');
+          }
+        }
+      }
+
       return true;
     } catch (e) {
       print('Error deleting media item: $e');
