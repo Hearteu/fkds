@@ -41,6 +41,16 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&auto=format&fit=crop',
   ];
   bool _showPhotoManagement = false;
   bool _isUploading = false;
@@ -291,8 +301,6 @@ class _BirthdayScreenState extends State<BirthdayScreen>
 
                           const SizedBox(height: 40),
 
-                          // Celebration button
-                          _buildCelebrationButton(),
                         ],
                       ),
                     ),
@@ -365,14 +373,21 @@ class _BirthdayScreenState extends State<BirthdayScreen>
         borderRadius: BorderRadius.circular(25),
         border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
-      child: IconButton(
-        icon: Icon(
-          _showPhotoManagement ? Icons.close : Icons.photo_library,
-          color: Colors.white,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(25),
+          onTap: _togglePhotoManagement,
+          child: Container(
+            width: 50,
+            height: 50,
+            child: Icon(
+              _showPhotoManagement ? Icons.close : Icons.photo_library,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
         ),
-        onPressed: _togglePhotoManagement,
-        tooltip:
-            _showPhotoManagement ? 'Hide Photo Management' : 'Manage Photos',
       ),
     );
   }
@@ -602,83 +617,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     );
   }
 
-  Widget _buildCelebrationButton() {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: Container(
-        width: double.infinity,
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Colors.white, Colors.white70],
-          ),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () {
-              // Add celebration effect
-              _triggerCelebration();
-            },
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '🎊',
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Celebrate!',
-                    style: GoogleFonts.lato(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF667EEA),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    '🎊',
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  void _triggerCelebration() {
-    // Restart animations for celebration effect
-    _scaleController.reset();
-    _scaleController.forward();
-
-    // Add more confetti
-    for (int i = 0; i < 20; i++) {
-      _confetti.add(ConfettiParticle(
-        x: _random.nextDouble(),
-        y: 0,
-        color: _getRandomColor(),
-        size: _random.nextDouble() * 8 + 4,
-        speed: _random.nextDouble() * 3 + 2,
-        rotation: _random.nextDouble() * 360,
-      ));
-    }
-
-    setState(() {});
-  }
 
   void _togglePhotoManagement() {
     setState(() {
