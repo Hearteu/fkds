@@ -300,7 +300,6 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                           ),
 
                           const SizedBox(height: 40),
-
                         ],
                       ),
                     ),
@@ -315,35 +314,52 @@ class _BirthdayScreenState extends State<BirthdayScreen>
   }
 
   Widget _buildPhotoCollage() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
     return Container(
       width: double.infinity,
       height: double.infinity,
       child: Stack(
         children: [
-          // Photo grid with overlapping effect
+          // Photo grid with overlapping effect - more coverage, no gaps
           ...List.generate(_backgroundPhotos.length, (index) {
+            // Calculate position to cover more area
+            final row = index ~/ 4; // 4 photos per row for better coverage
+            final col = index % 4;
+            
+            // Base positions with minimal spacing
+            final baseLeft = (col * screenWidth / 4) - 50; // Start slightly off-screen
+            final baseTop = (row * screenHeight / 5) - 50; // Start slightly off-screen
+            
+            // Add small random offset for natural look
+            final offsetX = (_random.nextDouble() - 0.5) * 100;
+            final offsetY = (_random.nextDouble() - 0.5) * 100;
+            
+            // Larger photos for better coverage
+            final photoWidth = (screenWidth / 3) + _random.nextInt(100).toDouble();
+            final photoHeight = (screenHeight / 4) + _random.nextInt(100).toDouble();
+            
             return Positioned(
-              left: (index % 3) * (MediaQuery.of(context).size.width / 3) +
-                  (_random.nextDouble() - 0.5) * 50,
-              top: (index ~/ 3) * (MediaQuery.of(context).size.height / 4) +
-                  (_random.nextDouble() - 0.5) * 50,
+              left: baseLeft + offsetX,
+              top: baseTop + offsetY,
               child: Transform.rotate(
-                angle: (_random.nextDouble() - 0.5) * 0.5,
+                angle: (_random.nextDouble() - 0.5) * 0.3, // Less rotation for better coverage
                 child: Container(
-                  width: 200.0 + _random.nextInt(100).toDouble(),
-                  height: 150.0 + _random.nextInt(80).toDouble(),
+                  width: photoWidth,
+                  height: photoHeight,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(5, 5),
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 8,
+                        offset: const Offset(3, 3),
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
                       imageUrl: _backgroundPhotos[index],
                       fit: BoxFit.cover,
@@ -367,26 +383,27 @@ class _BirthdayScreenState extends State<BirthdayScreen>
   }
 
   Widget _buildPhotoManagementButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return GestureDetector(
+      onTap: _togglePhotoManagement,
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2),
           borderRadius: BorderRadius.circular(25),
-          onTap: _togglePhotoManagement,
-          child: Container(
-            width: 50,
-            height: 50,
-            child: Icon(
-              _showPhotoManagement ? Icons.close : Icons.photo_library,
-              color: Colors.white,
-              size: 24,
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
+          ],
+        ),
+        child: Icon(
+          _showPhotoManagement ? Icons.close : Icons.photo_library,
+          color: Colors.white,
+          size: 24,
         ),
       ),
     );
@@ -616,8 +633,6 @@ class _BirthdayScreenState extends State<BirthdayScreen>
       ),
     );
   }
-
-
 
   void _togglePhotoManagement() {
     setState(() {
