@@ -282,7 +282,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                           Text(
                             '🎉 Happy Birthday! 🎉',
                             style: GoogleFonts.pacifico(
-                              fontSize: 36,
+                              fontSize: 25,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                               shadows: [
